@@ -1,0 +1,269 @@
+############################################################
+#		ARRAY OCCURANCE OF AN ELEMENT      	     #
+###########################################################
+.data
+address: .space 400
+arraySize: .asciiz "Please enter the size of the array: "
+enterNumber: .asciiz "Please enter the numbers: "
+menuInterface: .asciiz "\n***********************************************************************************************\nDisplay the number of occurrences of an array element\n************************************************************************************************\n"
+index: .asciiz "\nPlease enter index: "
+numOfOccurences: .asciiz "Number of occurences: "
+newLine: .asciiz "\n"
+space: .asciiz "  "
+rs: .asciiz " ] "
+ls: .asciiz " [  "
+
+.text 
+la $a0, arraySize #"Please enter the size of the array: "
+li $v0, 4 #print string
+syscall
+
+li $v0, 5 #read integer
+syscall
+
+move $s2, $v0 #$s2 = array size
+
+la $a0, enterNumber # "Please enter the numbers: "
+li $v0, 4 #print string
+syscall
+
+li $v0, 5 #read integer
+syscall
+
+la $a0, address  #address = beginning address of the array 
+move $s0, $a0
+
+sw $v0, 0($s0) #memory write 
+move $s1, $s0  #$s0 = $s1 = first element's address 
+
+li $s4, 1 #initialize the counter
+addi $s0, $s0, 4 #increment the byte counter
+
+loopNumbers: 
+	beq $s4, $s2, menuOptions
+	
+	la $a0, enterNumber # "Please enter the numbers: "
+	li $v0, 4 #print string
+	syscall
+
+	li $v0, 5 #read integer
+	syscall
+	
+	sw $v0, 0($s0) #memory write 
+
+	addi $s4, $s4, 1 #increment the counter
+	addi $s0, $s0, 4 #increment the byte counter
+	
+	j loopNumbers
+	
+menuOptions:
+	la $a0, menuInterface
+	li $v0, 4 #print string
+	syscall
+	
+	add $s4, $0, $0
+	
+	la $a0, ls
+	li $v0, 4 #print string
+	syscall
+	
+	printArray:
+		beq $s4, $s2, occurance
+
+		lw $s6, 0($s1)
+		move $a0, $s6 
+		li $v0, 1 #print integer
+		syscall
+
+		addi $s1, $s1, 4 
+		addi $s4, $s4, 1 #increment counter 
+
+		la $a0, space #" " 
+		li $v0, 4 #print string 
+		syscall 
+
+		j printArray
+
+#Display the number of occurrences of an array element
+occurance:
+	la $a0, rs
+	li $v0, 4 #print string
+	syscall 
+	
+	la $a0, index
+	li $v0, 4 #print string
+	syscall
+	
+	li $v0, 5 #read integer 
+	syscall
+	
+	move $s5, $v0 #$t5 = index
+	
+	#s2 = array size
+	la $s3, address #$s3 = beginning address 
+	
+	move $v1, $s3
+	add $s4, $0, $0
+	
+	li $s4, 0
+	li $s7, 0  #$s7 = number of occurences 
+	
+	li $a2, 0
+	addi $s5, $s5, 1
+	
+	loopGet:
+		beq $a2, $s5, loop3
+		lw $a3, 0($v1)
+		addi $a2, $a2, 1
+		addi $v1, $v1, 4
+		j loopGet
+		
+	loop3: 
+		beq $s4, $s2, printOccurences 
+		lw $a1, 0($s3) #memory read
+		beq $a3, $a1, equal
+		bne $a3, $a1, notEqual
+	
+			
+	equal:
+	
+		addi $s7, $s7, 1 #increment number of occurences 
+		addi $s4, $s4, 1 #increment the counter
+		addi $s3, $s3, 4 #increment the byte counter
+		
+		j loop3
+	
+	notEqual:
+		addi $s4, $s4, 1 #increment the counter
+		addi $s3, $s3, 4 #increment the byte counter
+		
+		j loop3
+		
+	printOccurences:
+	
+		la $a0, numOfOccurences
+		li $v0, 4 #print string
+		syscall
+		
+		move $a0, $s7
+		li $v0, 1 #read integer
+		syscall
+		
+		j exit
+
+exit: 
+li $v0, 10
+syscall
+
+
+####################################################################
+# Subprogram to calculate hamming register between two registers   #
+# Öykü Elis Türegün                                                #
+# Recitation 2                                                     #
+# 15.03.2023							      #
+####################################################################
+.data
+enterS0: .asciiz "Enter $s0 value: "
+enterS1: .asciiz "Enter $s1 value: "
+hammingDistance: .asciiz "Hamming distance: "
+continue: .asciiz "\n\nEnter 'y' to continue: /n) "
+newL: .asciiz "\n"
+hexS0: .asciiz "\n$s0 =  "
+hexS1: .asciiz "\n$s1 =  "
+.text
+.globl main
+
+main:
+    li $v0, 4 # print string
+    la $a0, newL
+    syscall
+    
+    li $v0, 4 # print string
+    la $a0, enterS0
+    syscall
+
+    li $v0, 5 # get integer s0 value
+    syscall
+    
+    move $s0, $v0 # store s0 value
+  
+    
+    li $v0, 4 # print string
+    la $a0, enterS1 
+    syscall
+
+    li $v0, 5 # get integer s1 value
+    syscall
+    
+    move $s1, $v0 # store s1 value
+    
+
+    # hamming function call
+    jal hamming
+    
+    move $s3, $v0
+    
+
+    li $v0, 4  # hex
+    la $a0, hexS0
+    syscall 
+    
+    li $v0, 34
+    move $a0, $s0
+    syscall
+    
+    li $v0, 4  # hex
+    la $a0, hexS1
+    syscall 
+    
+    li $v0, 34
+    move $a0, $s1
+    syscall
+    
+    li $v0, 4  
+    la $a0, newL
+    syscall 
+    # print hamming distance
+    li $v0, 4 # print string
+    la $a0, hammingDistance
+    syscall
+
+    move $a0, $s3 # put result in a0
+    li $v0, 1 # print integer
+    syscall
+
+    # ask user to continue or not
+    li $v0, 4 # print string
+    la $a0, continue 
+    syscall
+
+    li $v0, 12 # reading character
+    syscall
+    
+    beq $v0, 'y', main  # continue if y entered
+
+    li $v0, 10 # exit 
+    syscall
+
+    
+    
+hamming:
+
+    li $s6, 0 # counter for loop
+    xor $s7, $s0, $s1 # compare bits to see if they are same or not
+    
+    loop: 
+      beq $s7, $0, exit # loop control
+
+    	andi $s5, $s7, 1
+    	
+    	add $s4, $s4, $s5 
+    	
+    	srl $s7, $s7, 1 # shift right
+    	
+   
+    	j loop
+    	
+    	exit: 
+    		move $v0, $s4
+    		jr $ra

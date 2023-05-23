@@ -1,0 +1,109 @@
+####################################################################
+# Subprogram to calculate hamming distance between two registers   #
+# Öykü Elis Türegün                                                #
+# Recitation 2                                                     #
+# 15.03.2023							      #
+####################################################################
+.data
+enterS0: .asciiz "Enter $s0 value: "
+enterS1: .asciiz "Enter $s1 value: "
+hammingDistance: .asciiz "Hamming distance: "
+continue: .asciiz "\n\nEnter 1 if you want to continue: /n) "
+newL: .asciiz "\n"
+hexS0: .asciiz "\n$s0 =  "
+hexS1: .asciiz "\n$s1 =  "
+.text
+.globl main
+
+main:
+    li $v0, 4 # print string
+    la $a0, newL
+    syscall
+    
+    li $v0, 4 # print string
+    la $a0, enterS0
+    syscall
+
+    li $v0, 5 # get integer s0 value
+    syscall
+    
+    move $s0, $v0 # store s0 value
+  
+    
+    li $v0, 4 # print string
+    la $a0, enterS1 
+    syscall
+
+    li $v0, 5 # get integer s1 value
+    syscall
+    
+    move $s1, $v0 # store s1 value
+    
+
+    # hamming function call
+    jal hamming
+    
+    move $s3, $v0
+    
+
+    li $v0, 4  # hex
+    la $a0, hexS0
+    syscall 
+    
+    li $v0, 34
+    move $a0, $s0
+    syscall
+    
+    li $v0, 4  # hex
+    la $a0, hexS1
+    syscall 
+    
+    li $v0, 34
+    move $a0, $s1
+    syscall
+    
+    li $v0, 4  
+    la $a0, newL
+    syscall 
+    # print hamming distance
+    li $v0, 4 # print string
+    la $a0, hammingDistance
+    syscall
+
+    move $a0, $s3 # put result in a0
+    li $v0, 1 # print integer
+    syscall
+
+    # ask user to continue or not
+    li $v0, 4 # print string
+    la $a0, continue 
+    syscall
+
+    li $v0, 12 # reading character
+    syscall
+    
+    beq $v0, '1', main  # continue if 1 entered
+
+    li $v0, 10 # exit 
+    syscall
+
+    
+hamming:
+
+    li $s6, 0 # counter for loop
+    xor $s7, $s0, $s1
+    
+    loop: 
+        beq $s7, $0, exit # loop control
+    	andi $s5, $s7, 1
+    	
+    	add $s4, $s4, $s5 
+    	
+    	srl $s7, $s7, 1 
+    	
+   
+    	j loop
+    	
+    	exit: 
+    		move $v0, $s4
+    		jr $ra

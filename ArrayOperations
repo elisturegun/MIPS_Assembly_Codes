@@ -1,0 +1,286 @@
+
+.data
+	space: .asciiz " "
+	enter: .asciiz "\n"
+	arrSize: .asciiz "\nPlease enter the size of your array: \n"
+	arr: .asciiz "\nPlease enter the array elements one by one: \n"
+	max: .asciiz " \nMax: "
+        min: .asciiz " \nMin: " 
+        menu: .asciiz   "\n* * * *  * * * * Menu * * * * * * * * * *\n"
+	createArr: .asciiz "a) Create an array   		         \n"
+	sort: .asciiz "b) Sort the array \n"
+	minMax: .asciiz "c) Find min and max \n"
+	quitMenu: .asciiz "d) Exit menu\n"
+	choose: .asciiz "Enter your choice: "
+	
+
+.text	
+
+main:  
+        li $v0, 4
+	la $a0, menu
+	syscall
+	
+	li $v0, 4
+	la $a0, createArr
+	syscall
+	
+	li $v0, 4
+	la $a0, sort
+	syscall
+	
+	li $v0, 4
+	la $a0, minMax
+	syscall
+	
+	li $v0, 4
+	la $a0, quitMenu
+	syscall
+	
+	li $v0, 4
+	la $a0, choose
+	syscall
+	
+	li $v0, 5
+	syscall
+	
+	
+	beq $v0, -1, quitMenuOp
+
+
+        jal getArray
+        add $a0, $0, $v0
+	add $a1, $0, $v1 
+	
+	add $s0, $0, $a0 
+	add $s1, $0, $a1  
+	
+	
+	jal findMin
+	add $t0,$v0,$0 #min
+	jal findMax
+        add $t1,$v1,$0 #max
+        
+	la $a0,min
+	li $v0,4
+	syscall	
+        la $a0, ($t0)
+	li $v0,1
+	syscall	
+	
+	la $a0,max
+	li $v0,4
+	syscall	
+	la $a0, ($t1)
+	li $v0,1
+	syscall	
+	
+	add $a0, $0, $s0
+	add $a1, $0, $s1
+	
+	jal bubbleSort
+	
+	li $v0,10
+     	syscall	     
+     	   
+getArray:
+	addi $sp, $sp, -24 #store 6 register
+	sw $s6, 20($sp) #save $s6 
+	sw $s7, 16($sp) #save s7 
+	sw $s0, 12($sp) #save $s0 
+	sw $s1, 8($sp) #save $s1 
+	sw $s2, 4($sp) #save $s2 
+	sw $s3, 0($sp) #save $s3 
+	
+	li $v0, 4
+	la $a0, arrSize
+	syscall
+    	li $v0, 5
+	syscall
+	
+	move $s7, $v0 #arrsize
+	addi $s6, $s7, 0 
+	addi $s0, $v0, 0
+	add $v1, $0, $s0
+	
+	sll $a0, $v1, 2 # a0 = $v1 * 4
+	li $v0, 9 
+	syscall 
+	add $s1, $0, $v0 # $s1 is begAddress
+	
+	
+	add $s2, $0, $s1 # address
+	li $s3, 0 # i = 0
+	
+	li $v0, 4
+	la $a0, arr
+	syscall
+	getElements:
+		beq $s3, $v1, done2
+		li $v0, 5
+		syscall
+		
+		sw $v0, 0($s2)
+		addi $s2, $s2, 4
+		addi $s3, $s3, 1
+		j getElements
+done2:
+	j printArray
+	
+	
+bubbleSort:
+	move $v0,$a0
+	li $s4,1 #true
+	
+	addi $s6, $a1,-1 # a1 = arraysizen  s6 = length -1
+	
+	innerLoop:
+		beq $s4,0,exitLoop2
+		li $s4, 0
+		li $s5,0
+		
+		move $s0,$v0 # v0 = a0 = pointer to head
+		
+			oprLoop:
+			beq $s5,$s6,finishLoop
+			
+			lw $s1, 0($s0)
+			addi $a0,$a0,4
+			lw $s0,0($a0)
+			
+			bge $s1,$a0, newLoop
+			
+			sw $s1, ($a0)
+			addi $a0,$a0,-4
+			sw $s0,($s0)
+			addi $s0,$s0,4
+			
+			li $s4, 1 # array is swapped
+			
+			newLoop:
+				addi $s5, $s5,1 
+				j innerLoop
+finishLoop:
+j innerLoop
+
+exitLoop2:
+jr $ra
+
+printArray:
+	mul $s6, $s6, 4
+	sub $s2, $s2, $s6
+	print:
+		beq $s7, 0, done
+		lw $a0, 0($s2)
+		li $v0, 1 #print
+		syscall
+		la $a0, space
+		li $v0, 4
+		syscall
+	
+		addi $s2, $s2, 4 #updating the address
+		subi $s7, $s7, 1 
+		j print
+done:
+	move $v0, $s1
+	lw $s3, 0($sp) #restore $s0 
+	lw $s2, 4($sp) #restore $s0 
+	lw $s1, 8($sp) #restore $s1 
+	lw $s0, 12($sp) #restore $s0 
+	lw $s7, 16($sp)
+	addi $sp, $sp, 20 #deallocate stack space
+	jr $ra #return to caller
+
+findMin:
+	addi $sp, $sp, -32 #make space on stack to store 8 register
+	sw $s2, 28($sp) #save $s2 on stack
+	sw $s3, 24($sp) #save $s3 on stack 
+	sw $s4, 20($sp) #save $s4 on stack
+	sw $s5, 16($sp) #save $s5 on stack
+	sw $s6, 12($sp) #save $s6 on stack
+	sw $s7, 8($sp) #save $s7 on stack
+	sw $s0, 4($sp) #save $s0 on stack
+	sw $s1, 0($sp) #save $s1 on stack
+	add $s0, $0, $a0 #s0 = arr
+	add $s1, $0, $a1 #s1 = arrSize
+	lw $s7, ($a0)
+	addi $s6, $0, 0
+	loop2:
+		beq $s6, $s1, endLoopMin
+		sll $s5, $s6, 2 
+		add $s4, $s0, $s5 #s4 = first address + curr address
+		lw $s3, ($s4) #s3= arr[i]
+		addi $s6, $s6, 1
+		blt $s7, $s3, loop2
+		move $s7, $s3
+		addi $s2, $s7, 0 #now s2 holds the min value
+		j loop2
+endLoopMin:
+   	add $v0,$s2,$0 #v0 holds the min
+	lw $s1, 0($sp) #restore $s1 from stack
+	lw $s0, 4($sp) #restore $s0 from stack
+	lw $s7, 8($sp)
+	lw $s6, 12($sp)
+	lw $s5, 16($sp)
+	lw $s4, 20($sp)
+	lw $s3, 24($sp)
+	lw $s2, 28($sp)
+	addi $sp, $sp, 32 #deallocate stack space
+	jr $ra
+findMax:
+	addi $sp, $sp, -32 #make space on stack to store 8 register
+	sw $s2, 28($sp) #save $s2 on stack
+	sw $s3, 24($sp) #save $s3 on stack 
+	sw $s4, 20($sp) #save $s4 on stack
+	sw $s5, 16($sp) #save $s5 on stack
+	sw $s6, 12($sp) #save $s6 on stack
+	sw $s7, 8($sp) #save $s7 on stack
+	sw $s0, 4($sp) #save $s0 on stack
+	sw $s1, 0($sp) #save $s1 on stack
+	add $s0, $0, $a0 #s0 = arr
+	add $s1, $0, $a1 #s1 = arrSize
+	lw $s7, ($a0)
+	addi $s6, $0, 0
+	loop3:
+		beq $s6, $s1, endLoopMax
+		sll $s5, $s6, 2
+		add $s4, $s0, $s5 
+		lw $s3, ($s4)
+		addi $s6, $s6, 1
+		bgt $s7, $s3, loop3
+		move $s7, $s3
+		addi $s2, $s7, 0 #now s2 holds the max value
+		j loop3
+endLoopMax:
+   	add $v1,$s2,$0 #v1 holds the max
+	lw $s1, 0($sp) #restore $s1 from stack
+	lw $s0, 4($sp) #restore $s0 from stack
+	lw $s7, 8($sp)
+	lw $s6, 12($sp)
+	lw $s5, 16($sp)
+	lw $s4, 20($sp)
+	lw $s3, 24($sp)
+	lw $s2, 28($sp)
+	addi $sp, $sp, 32 #deallocate stack space
+	jr $ra
+									
+exit:
+	add $v0, $zero, $t0 #array beginning address
+	add $v1, $zero, $t1 #array size
+	lw $s1, 0($sp) #restore $s1 
+	lw $s0, 4($sp) #restore $s0 
+	lw $s7, 8($sp)
+	lw $s6, 12($sp)
+	lw $s5, 16($sp)
+	lw $s4, 20($sp)
+	lw $s3, 24($sp)
+	lw $s2, 28($sp)
+	addi $sp, $sp, 32 #deallocate 
+	jr $ra
+	li $v0,10
+	syscall
+	
+	
+	quitMenuOp:
+	li $v0,10
+	syscall

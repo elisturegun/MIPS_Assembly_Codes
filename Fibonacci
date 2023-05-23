@@ -1,0 +1,55 @@
+##
+##	Program3.asm is a loop implementation
+##	of the Fibonacci function
+##        
+
+#################################
+#					 	#
+#		text segment		#
+#						#
+#################################
+
+	.text		
+.globl __start
+ 
+__start:		# execution starts here
+	li $a0,7	# to calculate fib(7)
+	jal fib		# call fib ################ERROR FLB -> FIB LABEL NAME
+	move $a0,$v0	# print result
+	li $v0, 1
+	syscall #################ERROR 1 SYSCALL 
+
+	la $a0,endl	# print newline ###########ERROR END --> ENDL 
+	li $v0,4
+	syscall ################ERROR 2 SYSCALL 
+
+	li $v0,10 ####### ERROR 100 --> 10 exit call
+	syscall	################ERROR 3 SYSCALL 	# bye bye
+
+#------------------------------------------------
+
+
+fib:	move $v0,$a0	# initialise last element
+	blt $a0,2,done	# fib(0)=0, fib(1)=1 ############ERROR LABEL NAME
+
+	li $t0,1	# second last element ########ERROR ALGORITHM 0 --> 1 1 ---> 0
+	li $v0,0	# last element
+
+loop:	add $t1,$t0,$v0	# get next value #############ERROR DOLLAR SIGN
+	move $t0,$v0	# update second last
+	move $v0,$t1	# update last element
+	subi $a0,$a0,1	# decrement count ###############ERROR IMMEDIATE SUB --> SUBI
+	bgt $a0,0,loop	# exit loop when count=0
+done:	jr $ra
+
+#################################
+#					 	#
+#     	 data segment		#
+#						#
+#################################
+
+	.data
+endl:	.asciiz "\n"
+
+##
+## end of Program3.asm

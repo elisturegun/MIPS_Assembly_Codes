@@ -1,0 +1,196 @@
+CS224
+Recitation 02
+Section 02
+Öykü Elis Türegün
+21902976
+12.03.2023
+
+
+.data
+enterArraySize1: .asciiz "Enter the array size: "
+enterFirst: .asciiz "***Enter first array elements one by one***"
+enterSecond: .asciiz "***Enter second array elements one by one***"
+enterElement: .asciiz "\nEnter element: "
+spaceBtw: .asciiz "  "
+lineBreak: .asciiz "\n"
+firstArray: .asciiz "***First array***\n [ "
+secondArray: .asciiz "***Second array***\n [ " 
+hamming: .asciiz "\nHaming Distance: "
+sbr: .asciiz "]\n"
+invalid: .asciiz "Invalid size! Bye"
+
+.text
+Main:
+	la $a0, enterArraySize1
+	li $v0, 4 # print string
+	syscall 
+
+	li $v0, 5 # get integer from user
+	syscall 
+	
+	beq $v0, $0, printError
+	blt $v0, $0, printError
+	
+	move $a0, $v0
+	move $t4, $v0 # $t4 = ARRAY 1 SIZE 
+	move $s0, $t4
+	
+	la $a0,enterFirst
+	li $v0, 4
+	syscall
+	
+	jal CreateArray 
+	move $s6, $v0 #address of first array
+	
+	la $a0, firstArray 
+	li $v0, 4 # print string
+	syscall
+	
+	move $t7, $s6 # address
+	move $t8, $s0 # size
+	
+	jal PrintArray # print FIRST array 
+
+	la $a0,enterSecond
+	li $v0, 4
+	syscall
+
+	jal CreateArray 
+	move $s7, $v0 #address of second array
+	
+	move $t7, $s7 # ADDRESS of FIRST --> $a0
+	move $t8, $s0
+	
+	la $a0, secondArray 
+	li $v0, 4 # print string
+	syscall
+	
+	jal PrintArray # print SECOND array
+
+	la $a0, hamming
+	li $v0, 4 # print string
+	syscall 
+	
+	jal CalculateDistance
+
+	# exit program
+	li $v0, 10
+	syscall
+	
+CreateArray:
+ 
+    add $sp, $sp, -4
+    sw $ra, 0($sp)
+    
+    mul $a0, $t4, 4
+		
+    li $v0, 9 # allocate space
+    syscall
+    
+    move $t3, $v0 # $t3 = address of array
+    move $a1, $t3 # $a1 = address
+    
+    jal InitializeArray
+
+    lw $ra, 0($sp)
+    add $sp, $sp, 4 #deallocate space
+    jr $ra
+
+
+InitializeArray:
+   li $t2, 0 # COUNTER for loop
+   li $t1, 0 
+   add $t0, $0, $a1	
+   
+	getElements:
+  		beq $t2, $t4, done
+
+  		li $v0, 4
+  		la $a0, enterElement
+  		syscall
+
+  		li $v0, 5
+  		syscall
+  		move $t5, $v0
+  
+  		sw $t5, 0($t0)
+
+  		addi $t2,$t2,1
+  		addi $t0, $t0, 4 
+  
+  	j getElements
+
+	done:
+  		move $v0, $t0
+  		jr $ra
+  
+PrintArray:
+	add $t6, $t8, $0  # COUNTER for loop
+  	add $t9, $0, $t7
+	loopPrint:
+		subi $t9, $t9, 4
+		beq $t6, 0, doneLoopP
+		lw $a0, 0($t9)
+		
+		li $v0, 1 # print integer ---> ELEMENT of ARRAY
+		syscall
+		
+		la $a0, spaceBtw # print space between elements
+		li $v0, 4 # print string 
+		syscall
+		
+		subi $t6, $t6, 1
+
+		j loopPrint 
+	
+	doneLoopP:
+		la $a0, sbr
+		li $v0, 4 # print string
+		syscall 
+		
+		jr $ra # return 	
+					
+					
+CalculateDistance:
+	# decrement pointer by one element
+	subi $s6, $s6, 4 
+	subi $s7, $s7, 4 
+	
+	move $t5, $s0 # COUNTER for loop
+	li $t4, 0 # DISTANCE COUNTER for HAMMING distance
+	while:
+		beq $t5, $0, donee
+		
+		lw $a2, ($s6) # CURRENT of FIRST ARRAY
+		lw $a3, ($s7) # CURRENT of SECOND ARRAY 
+		
+		beq $a2, $a3, equal # CURRENTS are EQUAL --> MOVE to NEXT ELEMENT
+		
+		addi $t4, $t4, 1 # CURRENTS are NOT EQUAL --> INCREMENT --> HAMMING counter
+		subi $t5, $t5, 1
+		
+		subi $s6, $s6, 4 # MOVE NEXT --> FIRST ARRAY
+		subi $s7, $s7, 4 # MOVE NEXT --> SECOND ARRAY
+		
+		j while
+		
+		equal:
+			subi $t5, $t5, 1 # INCREMENT LOOP COUNTER
+			subi $s6, $s6, 4 # MOVE NEXT --> FIRST ARRAY
+			subi $s7, $s7, 4 # MOVE NEXT --> SECOND ARRAY
+			
+		j while
+			
+		donee:
+			move $a0, $t4 # MOVE --> HAMMING TO V0 
+			li $v0, 1 # print integer ---> ELEMENT of ARRAY
+			syscall
+			jr $ra
+			
+printError:
+	la $a0, invalid
+	li $v0, 4
+	syscall 
+	
+	li $v0, 10
+	syscall
